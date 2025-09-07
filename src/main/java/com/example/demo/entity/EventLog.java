@@ -4,7 +4,6 @@ import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Type;
 
-import java.time.LocalDate;
 
 @Entity
 public class EventLog {
