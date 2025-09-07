@@ -12,6 +12,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
+/**
+ * Service for logging and managing associate hierarchy events such as promotion, demotion, and transfer.
+ *
+ * <p>
+ * Promotion: Moves an associate up the hierarchy by setting their manager to their current manager's manager and decreasing their level by 1.
+ * Demotion: Moves an associate down the hierarchy by assigning a new manager and setting their level to one more than the new manager's level.
+ * Transfer: Changes the branch of an associate and logs the event.
+ * </p>
+ */
 @Service
 public class EventLogService {
     @Autowired
@@ -20,14 +29,31 @@ public class EventLogService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * Retrieves all event logs.
+     * @return list of all event logs
+     */
     public List<EventLog> getAllEventLogs() {
         return eventLogRepository.findAll();
     }
 
+    /**
+     * Retrieves all event logs for a specific associate (agent).
+     * @param agentId the associate's ID
+     * @return list of event logs for the agent
+     */
     public List<EventLog> getEventLogsByAgent(String agentId) {
         return eventLogRepository.findByAssociate_Id(agentId);
     }
 
+    /**
+     * Logs an event for an associate, including hierarchy changes.
+     * @param eventType the type of event (Promotion, Demotion, Transfer)
+     * @param associate the associate involved
+     * @param oldHierarchy the hierarchy before the event
+     * @param newHierarchy the hierarchy after the event
+     * @param eventDate the date of the event
+     */
     @Transactional
     public void logEvent(String eventType, Associate associate, Object oldHierarchy, Object newHierarchy, java.time.LocalDateTime eventDate) {
         EventLog log = new EventLog();
@@ -41,7 +67,15 @@ public class EventLogService {
     }
 
     /**
-     * Promotion: Update the level and last_change_date of the existing Associate object.
+     * Promotes an associate up the hierarchy.
+     * <p>
+     * The associate's manager is set to their current manager's manager (moving them up one level),
+     * and their level is decreased by 1. Throws an exception if already at the top level.
+     * </p>
+     * @param associate the associate to promote
+     * @param newLevel the new level (not used in logic, for compatibility)
+     * @param changeDate the date of the promotion
+     * @throws CuminHierarchyException if the associate is already at the top level
      */
     @Transactional
     public void promoteAssociate(Associate associate, int newLevel, java.time.LocalDateTime changeDate) {
@@ -60,10 +94,15 @@ public class EventLogService {
     }
 
     /**
-     * Demotion: Move the associate down the hierarchy by assigning a new manager and adjusting the level.
-     * @param associate The associate being demoted
-     * @param newManager The associate who will be the new manager
-     * @param changeDate The date of the demotion
+     * Demotes an associate to report to a new manager and adjusts their level.
+     * <p>
+     * The associate's manager is set to the specified new manager, and their level is set to one more than the new manager's level.
+     * Validates that the new manager is at the same or a lower position (numerically higher level).
+     * </p>
+     * @param associate the associate being demoted
+     * @param newManager the new manager
+     * @param changeDate the date of the demotion
+     * @throws CuminHierarchyException if validation fails
      */
     @Transactional
     public void demoteAssociate(Associate associate, Associate newManager, java.time.LocalDateTime changeDate) {
@@ -89,7 +128,10 @@ public class EventLogService {
     }
 
     /**
-     * Transfer: Update the branch and last_change_date of the existing Associate object.
+     * Transfers an associate to a new branch and logs the event.
+     * @param associate the associate being transferred
+     * @param newBranch the new branch
+     * @param changeDate the date of the transfer
      */
     @Transactional
     public void transferAssociate(Associate associate, Branch newBranch, java.time.LocalDateTime changeDate) {
@@ -99,6 +141,11 @@ public class EventLogService {
         logEvent("Transfer", associate, oldHierarchyObj, newHierarchyObj, changeDate);
     }
 
+    /**
+     * Returns the chain of managers from the given associate up to the root.
+     * @param associate the starting associate
+     * @return list representing the hierarchy chain
+     */
     private java.util.List<Associate> getHierarchyChain(Associate associate) {
         java.util.List<Associate> chain = new java.util.ArrayList<>();
         Associate current = associate;
