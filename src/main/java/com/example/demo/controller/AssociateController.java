@@ -16,18 +16,19 @@ import com.example.demo.dto.AssociatePayload;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import com.example.demo.exception.CuminHierarchyException;
 
 
 @RestController
 @RequestMapping("/associates")
 public class AssociateController {
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Object> handleIllegalArgument(IllegalArgumentException ex) {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-        .body(java.util.Map.of(
-            "error", ex.getMessage(),
-            "code", "ASSOCIATE_PROMOTION_INVALID"
-        ));
+    @ExceptionHandler(CuminHierarchyException.class)
+    public ResponseEntity<Object> handleCuminHierarchyException(CuminHierarchyException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(java.util.Map.of(
+                "error", ex.getMessage(),
+                "code", ex.getErrorCode()
+            ));
     }
 
     @Autowired
@@ -92,10 +93,21 @@ public class AssociateController {
         return associateRepository.save(associate);
     }
 
+    // Demotion now expects a payload with newManagerId and changeDate
+    public static class DemotionPayload {
+        public String newManagerId;
+        public java.time.LocalDateTime changeDate;
+    }
+
     @PostMapping(path = "/{id}/demote")
-    public Associate demoteAssociate(@PathVariable String id, @RequestBody PromotionPayload payload) {
+    public Associate demoteAssociate(@PathVariable String id, @RequestBody DemotionPayload payload) {
         Associate associate = associateRepository.findById(id).orElseThrow();
-    eventLogService.demoteAssociate(associate, payload.newLevel, payload.changeDate);
+        if (payload.newManagerId == null) {
+            throw new CuminHierarchyException("newManagerId is required for demotion.", "DEMOTION_MANAGER_ID_REQUIRED");
+        }
+        Associate newManager = associateRepository.findById(payload.newManagerId)
+            .orElseThrow(() -> new CuminHierarchyException("New manager not found: " + payload.newManagerId, "DEMOTION_MANAGER_NOT_FOUND"));
+        eventLogService.demoteAssociate(associate, newManager, payload.changeDate);
         return associateRepository.save(associate);
     }
 
@@ -107,7 +119,7 @@ public class AssociateController {
             Long branchIdLong = Long.valueOf(payload.newBranchId);
             branch = branchRepository.findById(branchIdLong).orElseThrow();
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid branch ID: " + payload.newBranchId);
+            throw new CuminHierarchyException("Invalid branch ID: " + payload.newBranchId, "TRANSFER_INVALID_BRANCH_ID");
         }
     eventLogService.transferAssociate(associate, branch, payload.changeDate);
         return associateRepository.save(associate);

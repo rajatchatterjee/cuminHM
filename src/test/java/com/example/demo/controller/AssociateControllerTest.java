@@ -210,25 +210,116 @@ public class AssociateControllerTest {
     }
 
     @Test
-    void testDemoteAssociate() throws Exception {
+    void testDemoteAssociate_ValidDemotion() throws Exception {
+        // Manager at level 2
+        Associate manager = new Associate();
+        manager.setId("MGR1");
+        manager.setName("Manager");
+        manager.setLicenceNumber("LICMGR1");
+        manager.setLevel(2);
+        manager.setIsActive(true);
+        manager.setStartDate(LocalDateTime.now());
+        manager.setIsSpecialCase(false);
+        associateRepository.save(manager);
+
+        // Associate at level 2 (should be able to demote to report to manager at same level)
         Associate associate = new Associate();
         associate.setId("A12");
         associate.setName("Demote Me");
         associate.setLicenceNumber("LIC202");
-        associate.setLevel(3);
+        associate.setLevel(2);
         associate.setIsActive(true);
         associate.setStartDate(LocalDateTime.now());
         associate.setIsSpecialCase(false);
         associateRepository.save(associate);
 
         String json = "{" +
-                "\"newLevel\": 2," +
+                "\"newManagerId\": \"MGR1\"," +
                 "\"changeDate\": \"2025-09-06T11:00:00\"}";
         mockMvc.perform(post("/associates/A12/demote")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.level").value(2));
+                .andExpect(jsonPath("$.level").value(3))
+                .andExpect(jsonPath("$.manager.id").value("MGR1"));
+    }
+
+    @Test
+    void testDemoteAssociate_InvalidManagerLevel() throws Exception {
+        // Manager at level 1 (higher up)
+        Associate manager = new Associate();
+        manager.setId("MGR2");
+        manager.setName("Manager2");
+        manager.setLicenceNumber("LICMGR2");
+        manager.setLevel(1);
+        manager.setIsActive(true);
+        manager.setStartDate(LocalDateTime.now());
+        manager.setIsSpecialCase(false);
+        associateRepository.save(manager);
+
+        // Associate at level 2
+        Associate associate = new Associate();
+        associate.setId("A13");
+        associate.setName("Demote Me2");
+        associate.setLicenceNumber("LIC203");
+        associate.setLevel(2);
+        associate.setIsActive(true);
+        associate.setStartDate(LocalDateTime.now());
+        associate.setIsSpecialCase(false);
+        associateRepository.save(associate);
+
+        String json = "{" +
+                "\"newManagerId\": \"MGR2\"," +
+                "\"changeDate\": \"2025-09-06T11:00:00\"}";
+        mockMvc.perform(post("/associates/A13/demote")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void testDemoteAssociate_SelfDemotion_ShouldFail() throws Exception {
+        Associate associate = new Associate();
+        associate.setId("A14");
+        associate.setName("Self Demote");
+        associate.setLicenceNumber("LIC204");
+        associate.setLevel(2);
+        associate.setIsActive(true);
+        associate.setStartDate(LocalDateTime.now());
+        associate.setIsSpecialCase(false);
+        associateRepository.save(associate);
+
+        String json = "{" +
+                "\"newManagerId\": \"A14\"," +
+                "\"changeDate\": \"2025-09-06T11:00:00\"}";
+        mockMvc.perform(post("/associates/A14/demote")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void testDemoteAssociate_MissingManager_ShouldFail() throws Exception {
+        Associate associate = new Associate();
+        associate.setId("A15");
+        associate.setName("Missing Manager");
+        associate.setLicenceNumber("LIC205");
+        associate.setLevel(2);
+        associate.setIsActive(true);
+        associate.setStartDate(LocalDateTime.now());
+        associate.setIsSpecialCase(false);
+        associateRepository.save(associate);
+
+        String json = "{" +
+                "\"newManagerId\": \"DOESNOTEXIST\"," +
+                "\"changeDate\": \"2025-09-06T11:00:00\"}";
+        mockMvc.perform(post("/associates/A15/demote")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test

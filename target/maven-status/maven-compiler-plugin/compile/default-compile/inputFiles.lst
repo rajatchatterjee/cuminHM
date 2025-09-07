@@ -15,5 +15,6 @@
 /Users/rajatchatterjee/cumin/hierarchy management/src/main/java/com/example/demo/controller/AssociateController.java
 /Users/rajatchatterjee/cumin/hierarchy management/src/main/java/com/example/demo/controller/BranchController.java
 /Users/rajatchatterjee/cumin/hierarchy management/src/main/java/com/example/demo/service/EventLogService.java
+/Users/rajatchatterjee/cumin/hierarchy management/src/main/java/com/example/demo/exception/CuminHierarchyException.java
 /Users/rajatchatterjee/cumin/hierarchy management/src/main/java/com/example/demo/entity/LocalDateTimeAttributeConverter.java
 /Users/rajatchatterjee/cumin/hierarchy management/src/main/java/com/example/demo/service/BranchService.java

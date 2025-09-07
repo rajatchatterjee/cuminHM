@@ -11,8 +11,11 @@ com/example/demo/service/EventLogService.class
 com/example/demo/entity/EventLog.class
 com/example/demo/entity/Associate.class
 com/example/demo/entity/JsonbConverter.class
+com/example/demo/utils/GenerateData.class
 com/example/demo/repository/BranchRepository.class
 com/example/demo/controller/BranchController.class
+com/example/demo/exception/CuminHierarchyException.class
 com/example/demo/controller/EventLogController.class
+com/example/demo/controller/AssociateController$DemotionPayload.class
 com/example/demo/HierarchyManegementMain.class
 com/example/demo/service/AssociateService.class
