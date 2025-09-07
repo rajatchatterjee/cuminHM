@@ -3,10 +3,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.example</groupId>
-    <artifactId>demo</artifactId>
+    <artifactId>cumin-hm</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>demo</name>
+    <name>cumin-hm</name>
     <description>Demo Spring Boot project</description>
     <properties>
         <java.version>17</java.version>
@@ -69,6 +69,7 @@
         </dependency>
     </dependencies>
     <build>
+        <finalName>cumin-hm</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
